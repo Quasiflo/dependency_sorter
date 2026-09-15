@@ -1,5 +1,7 @@
 # Dependency_sorter
 
+[![pub package](https://img.shields.io/pub/v/dependency_sorter.svg)](https://pub.dev/packages/dependency_sorter)
+
 Sort your pubspec dependencies alphabetically!
 
 Fixes what the [`sort_pub_dependencies`](https://dart.dev/tools/linter-rules/sort_pub_dependencies) lint reports — which has no `dart fix` support (see [dart-lang/sdk#47958](https://github.com/dart-lang/sdk/issues/47958)). A tiny, dependency-light CLI that reorders `dependencies`, `dev_dependencies` and `dependency_overrides` while preserving comments, blank lines and formatting.
