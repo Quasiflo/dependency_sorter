@@ -5,7 +5,6 @@
     // YAML (pubspec/workflows), TOML (mise config), GitHub Actions (CI workflows).
     "recommendations": [
         "dart-code.dart-code",
-        "dart-code.flutter",
         "rvben.rumdl",
         "hverlin.mise-vscode",
         "pkl.pkl-vscode",

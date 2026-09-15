@@ -52,6 +52,6 @@
         "**/.rumdl_cache": true,
         "**/.vscode/mise-tools": true
     },
-    "dart.flutterSdkPath": ".vscode/mise-tools/flutter",
-    "cmake.cmakePath": "${workspaceFolder}/.vscode/mise-tools/cmake"
+    "cmake.cmakePath": "${workspaceFolder}/.vscode/mise-tools/cmake",
+    "dart.sdkPath": ".vscode/mise-tools/dart"
 }
