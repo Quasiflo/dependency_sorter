@@ -16,7 +16,7 @@ Use as a dev dependency (recommended):
 
 ```yaml
 dev_dependencies:
-  dependency_sorter: ^0.1.0
+  dependency_sorter: ^0.2.0
 ```
 
 <!-- x-release-please-end -->
