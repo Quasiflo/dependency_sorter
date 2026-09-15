@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:dependency_sorter/dependency_sorter.dart';
+import 'package:path/path.dart' as p;
 
 /// Exit code used when `--check` finds a pubspec that needs sorting.
 const int checkFailureExitCode = 1;
@@ -24,6 +25,14 @@ Future<void> main(List<String> arguments) async {
       help:
           'Report unsorted dependencies without modifying files. '
           'Exits with code $checkFailureExitCode when sorting is needed.',
+    )
+    ..addFlag(
+      'diff',
+      negatable: false,
+      help:
+          'Show a unified diff of the pending changes without modifying '
+          'files. Implies check-mode behavior: exits with code '
+          '$checkFailureExitCode when sorting is needed.',
     )
     ..addFlag(
       'sort-dependencies',
@@ -66,7 +75,7 @@ Future<void> main(List<String> arguments) async {
       'Usage: dependency_sorter [options] [path]\n'
       '\n'
       'Fixes the file in place by default. Use --check in CI to fail '
-      'instead of writing.',
+      'instead of writing, or --diff to preview the pending changes.',
     );
     stdout.writeln();
     stdout.writeln(parser.usage);
@@ -103,12 +112,24 @@ Future<void> main(List<String> arguments) async {
 
   final SortConfig config = _applyFlagOverrides(fileConfig, results);
   final bool check = results['check'] as bool;
+  final bool diff = results['diff'] as bool;
 
   final SortResult result = sortPubspecContents(original, config);
 
   if (!result.changed) {
     stdout.writeln('Already sorted: ${file.path}');
     return;
+  }
+
+  if (diff) {
+    stdout.write(
+      unifiedDiff(
+        path: file.path,
+        from: original.split('\n'),
+        to: result.contents.split('\n'),
+      ),
+    );
+    exit(checkFailureExitCode);
   }
 
   if (check) {
@@ -152,7 +173,7 @@ File _resolvePubspecFile(String rawPath) {
     followLinks: false,
   );
   if (type == FileSystemEntityType.directory) {
-    return File('$rawPath/pubspec.yaml');
+    return File(p.join(rawPath, 'pubspec.yaml'));
   }
   return File(rawPath);
 }

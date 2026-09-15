@@ -112,6 +112,28 @@ dev_dependencies:
       expect(result.exitCode, 0, reason: out(result));
     });
 
+    test('--diff prints a unified diff without writing', () async {
+      writePubspec('dependencies:\n  b: any\n  a: any\n');
+      final result = await runCli(['--diff']);
+      expect(result.exitCode, 1, reason: out(result));
+      expect(out(result), contains('--- a/'));
+      expect(out(result), contains('+++ b/'));
+      expect(out(result), contains('-  b: any'));
+      expect(out(result), contains('+  b: any'));
+      // File untouched.
+      expect(
+        File('${tmp.path}/pubspec.yaml').readAsStringSync(),
+        'dependencies:\n  b: any\n  a: any\n',
+      );
+    });
+
+    test('--diff exits 0 when already sorted', () async {
+      writePubspec('dependencies:\n  a: any\n  b: any\n');
+      final result = await runCli(['--diff']);
+      expect(result.exitCode, 0, reason: err(result));
+      expect(out(result), contains('Already sorted'));
+    });
+
     test('errors clearly when the pubspec is missing', () async {
       final result = await runCli(['--path', '${tmp.path}/missing.yaml']);
       expect(result.exitCode, 2);
