@@ -8,10 +8,10 @@
     ":enableVulnerabilityAlertsWithAdditionalLabel(security)"
   ],
   "customDatasources": {
-    "flutter": {
-      "defaultRegistryUrlTemplate": "https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json",
+    "dart": {
+      "defaultRegistryUrlTemplate": "https://storage.googleapis.com/storage/v1/b/dart-archive/o?prefix=channels/stable/release/&delimiter=/",
       "transformTemplates": [
-        "{ \"releases\": $map(releases[channel = \"stable\"], function($r) { { \"version\": $replace($r.version, \"-stable\", \"\") } }) }"
+        "{ \"releases\": $map($filter(prefixes, function($p) { $contains($substringBefore($substringAfter($p, \"channels/stable/release/\"), \"/\"), \".\") }), function($p) { { \"version\": $substringBefore($substringAfter($p, \"channels/stable/release/\"), \"/\") } }), \"sourceUrl\": \"https://github.com/dart-lang/sdk\", \"homepage\": \"https://dart.dev\", \"changelogUrl\": \"https://github.com/dart-lang/sdk/blob/main/CHANGELOG.md\" }"
       ]
     }
   },
