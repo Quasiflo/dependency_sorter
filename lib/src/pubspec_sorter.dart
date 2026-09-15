@@ -92,7 +92,7 @@ bool _isSectionEnabled(String section, SortConfig config) {
 ///
 /// Handles both LF and CRLF input by stripping a trailing `\r` per line. The
 /// final empty segment produced by a trailing newline is dropped; callers
-/// restore it via [hasTrailingNewline]-style tracking.
+/// restore it via `hasTrailingNewline`-style tracking.
 List<String> _splitLines(String contents) {
   final List<String> raw = contents.split('\n');
   // Drop the artifact of a trailing newline: it is tracked separately so
@@ -100,7 +100,7 @@ List<String> _splitLines(String contents) {
   if (raw.isNotEmpty && raw.last == '') raw.removeLast();
   return [
     for (final line in raw)
-      line.endsWith('\r') ? line.substring(0, line.length - 1) : line,
+      if (line.endsWith('\r')) line.substring(0, line.length - 1) else line,
   ];
 }
 
