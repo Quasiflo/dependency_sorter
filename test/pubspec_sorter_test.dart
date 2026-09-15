@@ -183,45 +183,93 @@ dependencies:
       expect(result.contents, expected);
     });
 
-    test('keeps blank lines and end-of-section comments', () {
-      const input = '''
-dependencies:
-  yaml: any
-
-  args: any
-  # Trailing note about the section.
-''';
-      const expected = '''
-dependencies:
-  args: any
-  yaml: any
-
-  # Trailing note about the section.
-''';
-      final result = sortPubspecContents(input, SortConfig.defaults);
-      expect(result.contents, expected);
-    });
-
-    test('preserves blank lines between entries', () {
+    test('pins blank separators in place while entries reorder', () {
       const input = '''
 dependencies:
   yaml: any
 
   args: any
 ''';
-      // Blank lines stay with the preceding entry, so the separator moves
-      // with `yaml` rather than staying in place.
+      // The separator stays between the first and second slot; only the
+      // entries permute around it.
       const expected = '''
 dependencies:
   args: any
-  yaml: any
 
+  yaml: any
 ''';
       final result = sortPubspecContents(input, SortConfig.defaults);
       expect(result.contents, expected);
       // And the result is stable.
       final again = sortPubspecContents(result.contents, SortConfig.defaults);
       expect(again.changed, isFalse);
+    });
+
+    test('keeps end-of-section blanks and comments at the end', () {
+      const input = '''
+dependencies:
+  yaml: any
+  args: any
+  # Trailing note about the section.
+
+next_section: true
+''';
+      // The trailing blank and comment belong to the end of the section,
+      // not to the entry above them, so they stay at the end.
+      const expected = '''
+dependencies:
+  args: any
+  yaml: any
+  # Trailing note about the section.
+
+next_section: true
+''';
+      final result = sortPubspecContents(input, SortConfig.defaults);
+      expect(result.contents, expected);
+    });
+
+    test('leaves the separator above the next section in place', () {
+      // Regression test: the blank line separating dev_dependencies from
+      // the following section used to travel with the moved entry.
+      const input = '''
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  dependency_sorter:
+    git: https://example.com/dependency_sorter.git
+
+flutter:
+  uses-material-design: true
+''';
+      const expected = '''
+dev_dependencies:
+  dependency_sorter:
+    git: https://example.com/dependency_sorter.git
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+''';
+      final result = sortPubspecContents(input, SortConfig.defaults);
+      expect(result.contents, expected);
+    });
+
+    test('keeps a leading blank line at the top of the section', () {
+      const input = '''
+dependencies:
+
+  yaml: any
+  args: any
+''';
+      const expected = '''
+dependencies:
+
+  args: any
+  yaml: any
+''';
+      final result = sortPubspecContents(input, SortConfig.defaults);
+      expect(result.contents, expected);
     });
 
     test('handles quoted keys', () {

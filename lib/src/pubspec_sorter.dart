@@ -44,9 +44,10 @@ SortConfig parseSortConfig(String contents) {
 /// indentation, quoting, trailing newline, line endings) is preserved, and
 /// already-sorted sections are left untouched.
 ///
-/// Entry blocks carry their leading comment lines with them when reordered;
-/// sections that cannot be parsed safely (flow-style maps, unexpected
-/// indentation, unparseable keys) are left unchanged.
+/// Entry blocks carry their leading comment lines with them when reordered,
+/// while blank-line separators stay pinned where they are; sections that
+/// cannot be parsed safely (flow-style maps, unexpected indentation,
+/// unparseable keys) are left unchanged.
 SortResult sortPubspecContents(String contents, SortConfig config) {
   if (!config.sortsAnything) {
     return SortResult(contents: contents, sortedSections: const []);
@@ -131,14 +132,19 @@ bool _sortSection(List<String> lines, String section) {
   if (_listsEqual(keys, sorted)) return false;
 
   // Stable reorder: duplicate keys (invalid pubspecs) keep relative order.
-  final List<_Entry> reordered = List.of(parsed.entries)
+  final List<_EntryBlock> reordered = List.of(parsed.entries)
     ..sort((a, b) {
       final int order = a.key.compareTo(b.key);
       return order != 0 ? order : a.index.compareTo(b.index);
     });
 
+  // Rebuild by walking the original layout: gaps stay exactly where they
+  // are while entry slots take the next entry in sorted order. An unchanged
+  // order therefore reproduces the input byte-for-byte.
+  final List<_EntryBlock> queue = List.of(reordered);
   final List<String> rebuilt = [
-    for (final entry in reordered) ...entry.lines,
+    for (final block in parsed.items)
+      if (block is _GapBlock) ...block.lines else ...queue.removeAt(0).lines,
     ...parsed.trailing,
   ];
   for (var i = 0; i < rebuilt.length; i++) {
@@ -278,51 +284,93 @@ String? _decodeKey(String rawKey) {
   return null;
 }
 
-class _Entry {
-  _Entry(this.key, this.index, this.lines);
+/// One positional unit of a section body.
+sealed class _Block {
+  const _Block();
+}
+
+/// A sortable dependency entry: its key, original position, and full lines
+/// (leading comments plus the key and its nested value).
+class _EntryBlock extends _Block {
+  _EntryBlock(this.key, this.index, this.lines);
   final String key;
   final int index;
   final List<String> lines;
 }
 
+/// A run of blank lines pinned to its position while entries reorder around
+/// it. Comments stranded above a blank run (separated from the entry they
+/// precede) are pinned with it, keeping already-sorted files byte-identical.
+class _GapBlock extends _Block {
+  _GapBlock(this.lines);
+  final List<String> lines;
+}
+
 class _SectionParse {
-  _SectionParse(this.entries, this.trailing);
-  final List<_Entry> entries;
+  _SectionParse(this.entries, this.items, this.trailing);
+
+  /// Sortable entries in original order.
+  final List<_EntryBlock> entries;
+
+  /// The section body as an alternating sequence of entries and gaps,
+  /// recording the original layout for the rebuild.
+  final List<_Block> items;
+
+  /// Comments after the last entry, which stay at the end.
   final List<String> trailing;
 }
 
-/// Groups a section's lines into entry blocks.
+/// Groups a section's lines into entry blocks and blank-line gaps.
 ///
-/// Leading comment lines travel with the entry that follows them; blank
-/// lines stay with the preceding entry; comments after the last entry are
-/// kept as trailing lines. Returns `null` when the region is not a plain
-/// flat map (mixed indentation, unparseable keys, nested top-level content).
+/// Leading comment lines travel with the entry that follows them, unless a
+/// blank line intervenes (then they stay pinned with the gap). Blank runs
+/// are positional separators: leading blanks stay leading, trailing blanks
+/// stay trailing, and separators between entries stay in place while the
+/// entries permute around them. Returns `null` when the region is not a
+/// plain flat map (mixed indentation, unparseable keys, nested top-level
+/// content).
 _SectionParse? _parseEntries(
   List<String> lines,
   int start,
   int end,
   int entryIndent,
 ) {
-  final List<_Entry> entries = [];
+  final List<_EntryBlock> entries = [];
+  final List<_Block> items = [];
   final List<String> pendingComments = [];
   final List<String> trailing = [];
-  _Entry? current;
+  _EntryBlock? current;
   var index = 0;
 
-  void flushPendingAsTrailing() {
-    trailing.addAll(pendingComments);
-    pendingComments.clear();
+  // Whether the blank run at [i] separates blocks. A blank run is part of
+  // the current entry's multiline value only when the next substantive line
+  // continues that value (deeper indent, not an entry key).
+  bool isGap(int i) {
+    if (current == null) return true;
+    for (var j = i; j < end; j++) {
+      final String next = lines[j];
+      if (next.trim().isEmpty) continue;
+      if (next.trimLeft().startsWith('#')) return true;
+      final int indent = next.length - next.trimLeft().length;
+      final _KeyMatch? match = _matchEntryKey(next);
+      if (match != null && indent == entryIndent) return true;
+      if (indent > entryIndent) return false;
+      return true;
+    }
+    return true;
   }
 
   for (var i = start; i < end; i++) {
     final String line = lines[i];
     if (line.trim().isEmpty) {
-      // Blank lines stay with the preceding block so visual separators
-      // survive reordering in a predictable way.
-      if (current == null) {
-        pendingComments.add(line);
+      if (!isGap(i)) {
+        // Blank line inside a multiline value; keep it with the entry.
+        current!.lines.add(line);
       } else {
-        current.lines.add(line);
+        // Separator: pin in place, carrying any stranded comments with it
+        // so an unchanged order reproduces the input exactly.
+        items.add(_GapBlock([...pendingComments, line]));
+        pendingComments.clear();
       }
       continue;
     }
@@ -341,8 +389,9 @@ _SectionParse? _parseEntries(
     final _KeyMatch? match = _matchEntryKey(line);
     final int indent = line.length - line.trimLeft().length;
     if (match != null && indent == entryIndent) {
-      current = _Entry(match.key, index++, [...pendingComments, line]);
+      current = _EntryBlock(match.key, index++, [...pendingComments, line]);
       entries.add(current);
+      items.add(current);
       pendingComments.clear();
       continue;
     }
@@ -354,8 +403,9 @@ _SectionParse? _parseEntries(
     // maps) is outside what we can reorder safely.
     return null;
   }
-  flushPendingAsTrailing();
-  return _SectionParse(entries, trailing);
+  trailing.addAll(pendingComments);
+  pendingComments.clear();
+  return _SectionParse(entries, items, trailing);
 }
 
 bool _listsEqual(List<String> a, List<String> b) {
