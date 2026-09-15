@@ -1,0 +1,31 @@
+# Publishes to pub.dev via OIDC trusted publishing whenever release-please
+# cuts a new version (which pushes a `v<version>` tag).
+#
+# This must be a separate workflow triggered by the tag push itself:
+# pub.dev only issues a publishing token when the workflow run was triggered
+# by a tag matching the tag pattern configured on pub.dev. A publish job
+# inside release-please.yml would run on the branch push and be rejected,
+# and workflow_dispatch runs are also rejected for the same reason.
+#
+# One-time setup (per package, before the first automated publish):
+#   1. Publish the first version manually: `dart pub publish`.
+#   2. On https://pub.dev/packages/dependency_sorter/admin, enable
+#      "Automated publishing" from GitHub Actions with repository
+#      `Quasiflo/dependency_sorter` and tag pattern `v{{version}}`.
+# Optional hardening: require a GitHub environment on pub.dev and pass
+# `environment: pub.dev` via `with:` below (creating the environment with
+# required reviewers in the repo settings first).
+---
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+name: publish to pub.dev
+permissions: {} # no default token permissions; each job grants only what it needs
+jobs:
+  publish:
+    name: Publish to pub.dev
+    permissions:
+      contents: read # check out the tagged release
+      id-token: write # request the OIDC token pub.dev exchanges for a publishing token
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1
