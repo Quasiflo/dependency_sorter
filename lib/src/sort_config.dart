@@ -1,6 +1,6 @@
 /// Which dependency sections of a pubspec should be sorted.
 ///
-/// All sections are sorted by default, matching the behaviour of the
+/// All sections are sorted by default, matching the behavior of the
 /// `sort_pub_dependencies` lint. Individual sections can be disabled either
 /// via the `dependency_sorter` key in the pubspec itself or via CLI flags
 /// (which take precedence).
