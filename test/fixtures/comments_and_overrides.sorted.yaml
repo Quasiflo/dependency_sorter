@@ -1,0 +1,19 @@
+name: example
+
+# Core runtime deps.
+dependencies:
+  args: ^2.4.0
+  collection: ^1.18.0
+  # HTTP client.
+  http: ^1.2.0 # keep current
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.25.0
+
+dependency_overrides:
+  # Local checkout for development.
+  alpha:
+    path: ../alpha
+  zeta: ^2.0.0
+# End of dependency sections.
