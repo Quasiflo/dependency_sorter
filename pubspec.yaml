@@ -1,6 +1,6 @@
 name: dependency_sorter
 description: Sort your pubspec dependencies alphabetically. A tiny, well-tested CLI that fixes what the `sort_pub_dependencies` lint reports.
-version: 0.2.0
+version: 0.3.0
 maintainer: Luke Aguilar (@Attempt3035)
 repository: https://github.com/Quasiflo/dependency_sorter
 homepage: https://github.com/Quasiflo/dependency_sorter
