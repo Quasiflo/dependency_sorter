@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/Quasiflo/dependency_sorter/compare/v0.2.0...v0.3.0) (2026-09-16)
+
+
+### Features
+
+* colorful CLI output with status marks and --no-color support ([3cb6630](https://github.com/Quasiflo/dependency_sorter/commit/3cb663042462132a1cff48e63f43bffadb548bcc))
+
+
+### Bug Fixes
+
+* pin UTF-8 for CLI output and test harness decoding ([#7](https://github.com/Quasiflo/dependency_sorter/issues/7)) ([acd075b](https://github.com/Quasiflo/dependency_sorter/commit/acd075bc6de48727e99f761f5265343c34659345))
+
 ## [0.2.0](https://github.com/Quasiflo/dependency_sorter/compare/v0.1.0...v0.2.0) (2026-09-15)
 
 
