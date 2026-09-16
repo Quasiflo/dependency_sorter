@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:test/test.dart';
@@ -24,10 +25,16 @@ void main() {
     Future<ProcessResult> runCli(
       List<String> args, {
       String? workingDirectory,
-    }) => Process.run(Platform.resolvedExecutable, [
-      bin,
-      ...args,
-    ], workingDirectory: workingDirectory ?? tmp.path);
+    }) => Process.run(
+      Platform.resolvedExecutable,
+      [bin, ...args],
+      workingDirectory: workingDirectory ?? tmp.path,
+      // Pin UTF-8 decoding: the CLI emits non-ASCII status marks, and the
+      // platform default (e.g. Windows-1252) would mangle them into
+      // mojibake. Must match the stdout/stderr encoding set in bin/.
+      stdoutEncoding: utf8,
+      stderrEncoding: utf8,
+    );
 
     String out(ProcessResult result) => result.stdout as String;
     String err(ProcessResult result) => result.stderr as String;

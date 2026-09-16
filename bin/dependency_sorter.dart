@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:args/args.dart';
@@ -11,6 +12,12 @@ const int checkFailureExitCode = 1;
 const int errorExitCode = 2;
 
 Future<void> main(List<String> arguments) async {
+  // Pin UTF-8 for output: status marks (✔/✖) are non-ASCII, and the
+  // platform default encoding (e.g. Windows-1252 on Windows consoles)
+  // would otherwise mangle them.
+  stdout.encoding = utf8;
+  stderr.encoding = utf8;
+
   final ArgParser parser = ArgParser()
     ..addOption(
       'path',
