@@ -44,6 +44,10 @@ void main() {
         'dependencies:\n  a: any\n  b: any\n',
       );
       expect(out(result), contains('Sorted:'));
+      // Status marks print even without color support (this output is
+      // piped, so ANSI codes are disabled here).
+      expect(out(result), contains('\u2714'));
+      expect(out(result), isNot(contains('\x1b[')));
     });
 
     test('resolves a directory and an explicit file path', () async {
@@ -65,6 +69,7 @@ void main() {
       final result = await runCli(['--check']);
       expect(result.exitCode, 1, reason: out(result));
       expect(out(result), contains('Needs sorting'));
+      expect(out(result), contains('\u2716'));
       // File untouched.
       expect(
         File('${tmp.path}/pubspec.yaml').readAsStringSync(),
@@ -138,6 +143,7 @@ dev_dependencies:
       final result = await runCli(['--path', '${tmp.path}/missing.yaml']);
       expect(result.exitCode, 2);
       expect(err(result), contains('no pubspec.yaml'));
+      expect(err(result), contains('\u2716'));
     });
 
     test('--help and --version work', () async {

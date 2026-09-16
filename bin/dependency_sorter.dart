@@ -50,6 +50,13 @@ Future<void> main(List<String> arguments) async {
       defaultsTo: null,
     )
     ..addFlag(
+      'color',
+      defaultsTo: true,
+      help:
+          'Use colors in terminal output. Enabled by default when the '
+          'terminal supports it; disable with --no-color or NO_COLOR=1.',
+    )
+    ..addFlag(
       'version',
       abbr: 'v',
       negatable: false,
@@ -61,15 +68,19 @@ Future<void> main(List<String> arguments) async {
   try {
     results = parser.parse(arguments);
   } on FormatException catch (e) {
-    stderr.writeln('Error: ${e.message}');
+    _error('Error: ${e.message}');
     stderr.writeln();
     stderr.writeln('Usage:');
     stderr.writeln(parser.usage);
     exit(errorExitCode);
   }
 
+  final TerminalStyle style = TerminalStyle(
+    enabled: _wantsColor(stdout.supportsAnsiEscapes, results),
+  );
+
   if (results['help'] as bool) {
-    stdout.writeln('Sort pubspec dependencies alphabetically.');
+    stdout.writeln(style.bold('Sort pubspec dependencies alphabetically.'));
     stdout.writeln();
     stdout.writeln(
       'Usage: dependency_sorter [options] [path]\n'
@@ -83,6 +94,7 @@ Future<void> main(List<String> arguments) async {
   }
 
   if (results['version'] as bool) {
+    // Plain on purpose: machine-readable, safe for scripts.
     stdout.writeln('dependency_sorter $packageVersion');
     return;
   }
@@ -90,7 +102,7 @@ Future<void> main(List<String> arguments) async {
   final String rawPath = _resolveRawPath(results);
   final File file = _resolvePubspecFile(rawPath);
   if (!file.existsSync()) {
-    stderr.writeln('Error: no pubspec.yaml found at "${file.path}".');
+    _error('Error: no pubspec.yaml found at "${file.path}".');
     exit(errorExitCode);
   }
 
@@ -98,7 +110,7 @@ Future<void> main(List<String> arguments) async {
   try {
     original = file.readAsStringSync();
   } on FileSystemException catch (e) {
-    stderr.writeln('Error: cannot read "${file.path}": ${e.message}');
+    _error('Error: cannot read "${file.path}": ${e.message}');
     exit(errorExitCode);
   }
 
@@ -106,7 +118,7 @@ Future<void> main(List<String> arguments) async {
   try {
     fileConfig = parseSortConfig(original);
   } on FormatException catch (e) {
-    stderr.writeln('Error: invalid pubspec "${file.path}": ${e.message}');
+    _error('Error: invalid pubspec "${file.path}": ${e.message}');
     exit(errorExitCode);
   }
 
@@ -117,7 +129,9 @@ Future<void> main(List<String> arguments) async {
   final SortResult result = sortPubspecContents(original, config);
 
   if (!result.changed) {
-    stdout.writeln('Already sorted: ${file.path}');
+    stdout.writeln(
+      '${TerminalStyle.okMark} ${style.green('Already sorted:')} ${file.path}',
+    );
     return;
   }
 
@@ -127,26 +141,60 @@ Future<void> main(List<String> arguments) async {
         path: file.path,
         from: original.split('\n'),
         to: result.contents.split('\n'),
+        color: style.enabled,
       ),
     );
     exit(checkFailureExitCode);
   }
 
   if (check) {
-    stdout.writeln('Needs sorting: ${file.path}');
-    stdout.writeln('  unsorted: ${result.sortedSections.join(', ')}');
-    stdout.writeln('  run without --check to fix.');
+    stdout.writeln(
+      '${TerminalStyle.failMark} ${style.yellow('Needs sorting:')} ${file.path}',
+    );
+    stdout.writeln(
+      style.dim('  unsorted: ${result.sortedSections.join(', ')}'),
+    );
+    stdout.writeln(style.dim('  run without --check to fix.'));
     exit(checkFailureExitCode);
   }
 
   try {
     file.writeAsStringSync(result.contents);
   } on FileSystemException catch (e) {
-    stderr.writeln('Error: cannot write "${file.path}": ${e.message}');
+    _error('Error: cannot write "${file.path}": ${e.message}');
     exit(errorExitCode);
   }
-  stdout.writeln('Sorted: ${file.path}');
-  stdout.writeln('  sorted: ${result.sortedSections.join(', ')}');
+  stdout.writeln(
+    '${TerminalStyle.okMark} ${style.green('Sorted:')} ${file.path}',
+  );
+  stdout.writeln(style.dim('  sorted: ${result.sortedSections.join(', ')}'));
+}
+
+/// Whether colored output should be used.
+///
+/// Honors `--no-color` and the `NO_COLOR` convention, and requires a
+/// terminal that supports ANSI escapes (so piped and CI output stays plain).
+bool _wantsColor(bool supportsAnsi, ArgResults results) {
+  if (!(results['color'] as bool)) return false;
+  if (Platform.environment.containsKey('NO_COLOR')) return false;
+  return supportsAnsi;
+}
+
+/// Writes an error to stderr, styled when the terminal supports it.
+void _error(String message) {
+  // Recompute instead of threading the stdout style through: stderr may be
+  // redirected independently. `results` is unavailable here, so this honors
+  // NO_COLOR and terminal support; the --no-color flag is covered because
+  // flag parsing already succeeded before any styled output... except for
+  // parse errors themselves, where flags are unknown and colors stay on when
+  // supported. That matches common CLI behavior.
+  const TerminalStyle style = TerminalStyle(enabled: true);
+  if (stderr.supportsAnsiEscapes &&
+      !Platform.environment.containsKey('NO_COLOR')) {
+    stderr.writeln('${TerminalStyle.failMark} ${style.red(message)}');
+  } else {
+    stderr.writeln('${TerminalStyle.failMark} $message');
+  }
 }
 
 /// Returns the target path from `--path` or the positional argument.
@@ -154,11 +202,11 @@ String _resolveRawPath(ArgResults results) {
   final String? flag = results['path'] as String?;
   final List<String> rest = results.rest;
   if (rest.length > 1) {
-    stderr.writeln('Error: expected at most one path argument.');
+    _error('Error: expected at most one path argument.');
     exit(errorExitCode);
   }
   if (flag != null && rest.isNotEmpty) {
-    stderr.writeln(
+    _error(
       'Error: pass a path either with --path or as an argument, not both.',
     );
     exit(errorExitCode);

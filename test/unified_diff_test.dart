@@ -72,5 +72,17 @@ void main() {
           .toList();
       expect(deletions, isEmpty);
     });
+    test('colors deletions, insertions and headers when enabled', () {
+      final diff = unifiedDiff(
+        path: 'pubspec.yaml',
+        from: const ['dependencies:', '  b: any'],
+        to: const ['dependencies:', '  a: any'],
+        color: true,
+      );
+      expect(diff, contains('\x1b[31m-  b: any\x1b[0m'));
+      expect(diff, contains('\x1b[32m+  a: any\x1b[0m'));
+      expect(diff, contains('\x1b[36m@@'));
+      expect(diff, contains('\x1b[1m--- a/pubspec.yaml\x1b[0m'));
+    });
   });
 }

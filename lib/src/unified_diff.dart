@@ -1,22 +1,28 @@
 import 'dart:math';
 
+import 'terminal.dart';
+
 /// A minimal unified diff for `--diff` output.
 ///
 /// Kept dependency-free on purpose to preserve this package's tiny
 /// footprint. Pubspec files are small, so a simple longest-common-subsequence
 /// diff is plenty fast.
+///
+/// When [color] is `true`, deletions print red, insertions green, and hunk
+/// headers cyan. Defaults to plain text suitable for pipes and CI logs.
 String unifiedDiff({
   required String path,
   required List<String> from,
   required List<String> to,
   int context = 3,
+  bool color = false,
 }) {
+  final TerminalStyle style = TerminalStyle(enabled: color);
   final List<_Edit> edits = _diffEdits(from, to);
   if (edits.every((edit) => edit is _Equal)) return '';
-
   final StringBuffer out = StringBuffer()
-    ..writeln('--- a/$path')
-    ..writeln('+++ b/$path');
+    ..writeln(style.bold('--- a/$path'))
+    ..writeln(style.bold('+++ b/$path'));
 
   // Line numbers (1-based) of each edit in the from/to files.
   var fromLine = 1;
@@ -67,15 +73,15 @@ String unifiedDiff({
     // hunk (`-0,0` for an empty file), per unified-diff convention.
     final int fromStart = fromCount == 0 ? firstFrom - 1 : firstFrom;
     final int toStart = toCount == 0 ? firstTo - 1 : firstTo;
-    out.writeln('@@ -$fromStart,$fromCount +$toStart,$toCount @@');
+    out.writeln(style.cyan('@@ -$fromStart,$fromCount +$toStart,$toCount @@'));
     for (final (edit, _, _) in hunk) {
       switch (edit) {
         case _Equal(:final line):
           out.writeln(' $line');
         case _Delete(:final line):
-          out.writeln('-$line');
+          out.writeln(style.red('-$line'));
         case _Insert(:final line):
-          out.writeln('+$line');
+          out.writeln(style.green('+$line'));
       }
     }
   }
