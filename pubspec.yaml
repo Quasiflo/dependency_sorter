@@ -3,6 +3,7 @@ description: Sort your pubspec dependencies alphabetically. A tiny, well-tested 
 version: 0.2.0
 maintainer: Luke Aguilar (@Attempt3035)
 repository: https://github.com/Quasiflo/dependency_sorter
+homepage: https://github.com/Quasiflo/dependency_sorter
 issue_tracker: https://github.com/Quasiflo/dependency_sorter/issues
 
 environment:

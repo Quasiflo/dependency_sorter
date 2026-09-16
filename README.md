@@ -6,7 +6,14 @@
 
 Sort your pubspec dependencies alphabetically!
 
-Fixes what the [`sort_pub_dependencies`](https://dart.dev/tools/linter-rules/sort_pub_dependencies) lint reports — which has no `dart fix` support (see [dart-lang/sdk#47958](https://github.com/dart-lang/sdk/issues/47958)). A tiny, dependency-light CLI that reorders `dependencies`, `dev_dependencies` and `dependency_overrides` while preserving comments, blank lines and formatting.
+Fixes what the [`sort_pub_dependencies`](https://dart.dev/tools/linter-rules/sort_pub_dependencies) lint reports — which has no `dart fix` support (see [dart-lang/sdk#47958](https://github.com/dart-lang/sdk/issues/47958)). A tiny, dependency-light CLI that automatically reorders `dependencies`, `dev_dependencies` and `dependency_overrides` while preserving comments, blank lines and formatting.
+
+- Fixes in place, or previews with `--diff` and gates CI with `--check`
+- Comment- and blank-line-preserving: entries move, separators stay
+- Colored, script-friendly output (`--no-color` and `NO_COLOR` supported)
+- Zero transitive dependencies: just `args`, `meta`, `path` and `yaml`
+
+![demo: sorting a pubspec](https://raw.githubusercontent.com/Quasiflo/dependency_sorter/main/docs/assets/demo-fix.svg)
 
 ## Install
 
@@ -54,11 +61,21 @@ sorting is needed:
 dart run dependency_sorter --diff
 ```
 
+![demo: previewing with --diff](https://raw.githubusercontent.com/Quasiflo/dependency_sorter/main/docs/assets/demo-diff.svg)
+
 Point at a specific file or directory:
 
 ```sh
 dart run dependency_sorter --path packages/my_app
 dart run dependency_sorter packages/my_app/pubspec.yaml
+```
+
+Gate CI (GitHub Actions example) — fails the build when dependencies
+are unsorted:
+
+```yaml
+- name: Check pubspec sorting
+  run: dart run dependency_sorter --check
 ```
 
 Full options:
@@ -72,6 +89,7 @@ dart run dependency_sorter --help
 | `--path`, `-p` | Pubspec file or directory (default: `.`) |
 | `--check`, `-c` | Report only; exit `1` when sorting is needed |
 | `--diff` | Show a unified diff of pending changes; never writes, exit `1` when sorting is needed |
+| `--[no-]color` | Use colors in terminal output (default: on when supported; `NO_COLOR=1` also disables) |
 | `--[no-]sort-dependencies` | Toggle the `dependencies` section |
 | `--[no-]sort-dev-dependencies` | Toggle the `dev_dependencies` section |
 | `--[no-]sort-dependency-overrides` | Toggle the `dependency_overrides` section |
@@ -140,3 +158,14 @@ dependencies: {yaml: any, args: any} # left as-is; expand it to sort it
 ```
 
 Use `--diff` to preview exactly what would change before fixing.
+
+## Get Help & Contribute
+
+- Found a pubspec this tool sorts wrong (or refuses to sort)? Please
+  [file an issue](https://github.com/Quasiflo/dependency_sorter/issues)
+  and attach the pubspec — edge cases are what make this robust.
+- Contributions welcome! See [CONTRIBUTING.md](https://github.com/Quasiflo/dependency_sorter/blob/main/CONTRIBUTING.md).
+- Roadmap: ship this as an analyzer plugin with a real `dart fix`
+  quick-fix once the SDK supports diagnostics on YAML files
+  (see [dart-lang/sdk#61881](https://github.com/dart-lang/sdk/issues/61881)).
+  Until then, this CLI is the fix.

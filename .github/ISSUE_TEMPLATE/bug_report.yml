@@ -1,0 +1,28 @@
+---
+name: Bug report
+description: Report a pubspec this tool sorts wrong (or refuses to sort)
+labels: ["Bug 🐛"]
+body:
+  - type: textarea
+    id: pubspec
+    attributes:
+      label: Problem pubspec
+      description: Paste the pubspec.yaml content (scrub private names/URLs if needed).
+      render: yaml
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      description: The sorted output you expected, or the error you saw.
+      render: yaml
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: dependency_sorter version
+      description: Output of `dart run dependency_sorter --version`.
+    validations:
+      required: false
