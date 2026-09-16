@@ -13,7 +13,7 @@ Fixes what the [`sort_pub_dependencies`](https://dart.dev/tools/linter-rules/sor
 - Colored, script-friendly output (`--no-color` and `NO_COLOR` supported)
 - Zero transitive dependencies: just `args`, `meta`, `path` and `yaml`
 
-![demo: sorting a pubspec](https://raw.githubusercontent.com/Quasiflo/dependency_sorter/main/docs/assets/demo-fix.svg)
+![demo: sorting a pubspec](https://raw.githubusercontent.com/Quasiflo/dependency_sorter/main/doc/assets/demo-fix.svg)
 
 ## Install
 
@@ -61,7 +61,7 @@ sorting is needed:
 dart run dependency_sorter --diff
 ```
 
-![demo: previewing with --diff](https://raw.githubusercontent.com/Quasiflo/dependency_sorter/main/docs/assets/demo-diff.svg)
+![demo: previewing with --diff](https://raw.githubusercontent.com/Quasiflo/dependency_sorter/main/doc/assets/demo-diff.svg)
 
 Point at a specific file or directory:
 

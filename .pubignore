@@ -1,0 +1,12 @@
+# Files excluded from the published archive on pub.dev (but kept in git).
+#
+# doc/assets/ holds the animated SVG demos. They are safe to exclude because the
+# README references them via absolute raw.githubusercontent.com URLs, which
+# pub.dev resolves against the repository, not the archive.
+#
+# scripts/ holds maintainer-only tooling (demo generation).
+#
+# test/ is deliberately SHIPPED: for a tool that rewrites your files,
+# letting users audit and run the suite matters more than the kilobytes.
+doc/assets/
+scripts/

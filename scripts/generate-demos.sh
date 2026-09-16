@@ -9,7 +9,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ASSETS="$ROOT/docs/assets"
+ASSETS="$ROOT/doc/assets"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK" "$ROOT/demo"' EXIT
 
@@ -72,20 +72,21 @@ EOF
 asciinema record --overwrite --idle-time-limit 1 \
   --command "bash $WORK/fix.sh" "$WORK/fix.cast" >/dev/null
 nemasvg "$WORK/fix.cast" "$ASSETS/demo-fix.svg" \
-  --window --title dependency_sorter --cols 76 --rows 14 \
+  --window --title 'dependency_sorter - idempotent sorting' --cols 76 --rows 14 \
   --idle-time-limit 2
 
 # Demo 2: preview the same change with --diff.
 write_fixture
 cat > "$WORK/diff.sh" <<EOF
 printf '\$ dart run dependency_sorter --diff --path demo\n'
-"$DS" --diff --path demo
 sleep 1
+"$DS" --diff --path demo
+sleep 3
 EOF
 asciinema record --overwrite --idle-time-limit 1 \
   --command "bash $WORK/diff.sh" "$WORK/diff.cast" >/dev/null
 nemasvg "$WORK/diff.cast" "$ASSETS/demo-diff.svg" \
-  --window --title dependency_sorter --cols 76 --rows 14 \
+  --window --title 'dependency_sorter - --diff' --cols 76 --rows 14 \
   --idle-time-limit 2
 
 ls -la "$ASSETS"/demo-*.svg
