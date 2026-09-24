@@ -53,23 +53,10 @@ dependency_overrides:
   alpha: any
 ''';
       final result = sortPubspecContents(input, SortConfig.defaults);
-      expect(result.sortedSections, [
-        'dependencies',
-        'dev_dependencies',
-        'dependency_overrides',
-      ]);
-      expect(
-        result.contents,
-        contains('dependencies:\n  args: any\n  yaml: any'),
-      );
-      expect(
-        result.contents,
-        contains('dev_dependencies:\n  lints: any\n  test: any'),
-      );
-      expect(
-        result.contents,
-        contains('dependency_overrides:\n  alpha: any\n  zeta: any'),
-      );
+      expect(result.sortedSections, ['dependencies', 'dev_dependencies', 'dependency_overrides']);
+      expect(result.contents, contains('dependencies:\n  args: any\n  yaml: any'));
+      expect(result.contents, contains('dev_dependencies:\n  lints: any\n  test: any'));
+      expect(result.contents, contains('dependency_overrides:\n  alpha: any\n  zeta: any'));
     });
 
     test('respects disabled sections', () {
@@ -81,10 +68,7 @@ dev_dependencies:
   test: any
   lints: any
 ''';
-      final result = sortPubspecContents(
-        input,
-        const SortConfig(sortDevDependencies: false),
-      );
+      final result = sortPubspecContents(input, const SortConfig(sortDevDependencies: false));
       expect(result.sortedSections, ['dependencies']);
       expect(result.contents, contains('args: any\n  yaml: any'));
       // dev_dependencies left alone.
@@ -93,11 +77,7 @@ dev_dependencies:
 
     test('does nothing when every section is disabled', () {
       const input = 'dependencies:\n  b: any\n  a: any\n';
-      const config = SortConfig(
-        sortDependencies: false,
-        sortDevDependencies: false,
-        sortDependencyOverrides: false,
-      );
+      const config = SortConfig(sortDependencies: false, sortDevDependencies: false, sortDependencyOverrides: false);
       final result = sortPubspecContents(input, config);
       expect(result.changed, isFalse);
       expect(result.contents, input);
@@ -280,10 +260,7 @@ dependencies:
 ''';
       final result = sortPubspecContents(input, SortConfig.defaults);
       expect(result.changed, isTrue);
-      expect(
-        result.contents.indexOf('args'),
-        lessThan(result.contents.indexOf('yaml')),
-      );
+      expect(result.contents.indexOf('args'), lessThan(result.contents.indexOf('yaml')));
     });
 
     test('uses case-sensitive code-unit order like the lint', () {
@@ -411,10 +388,7 @@ dev_dependencies:
 dependency_sorter:
   sort_dev_dependencies: false
 ''';
-      expect(
-        parseSortConfig(input),
-        const SortConfig(sortDevDependencies: false),
-      );
+      expect(parseSortConfig(input), const SortConfig(sortDevDependencies: false));
     });
 
     test('parses all flags', () {
@@ -424,14 +398,7 @@ dependency_sorter:
   sort_dev_dependencies: false
   sort_dependency_overrides: false
 ''';
-      expect(
-        parseSortConfig(input),
-        const SortConfig(
-          sortDependencies: false,
-          sortDevDependencies: false,
-          sortDependencyOverrides: false,
-        ),
-      );
+      expect(parseSortConfig(input), const SortConfig(sortDependencies: false, sortDevDependencies: false, sortDependencyOverrides: false));
     });
 
     test('ignores unknown keys', () {

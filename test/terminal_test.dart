@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   group('TerminalStyle', () {
     test('wraps text in ANSI codes when enabled', () {
-      const TerminalStyle style = TerminalStyle(enabled: true);
+      const style = TerminalStyle(enabled: true);
       expect(style.green('ok'), '\x1b[32mok\x1b[0m');
       expect(style.red('err'), '\x1b[31merr\x1b[0m');
       expect(style.yellow('warn'), '\x1b[33mwarn\x1b[0m');
@@ -14,7 +14,7 @@ void main() {
     });
 
     test('returns text unchanged when disabled', () {
-      const TerminalStyle style = TerminalStyle(enabled: false);
+      const style = TerminalStyle(enabled: false);
       expect(style.green('ok'), 'ok');
       expect(style.red('err'), 'err');
       expect(style.yellow('warn'), 'warn');

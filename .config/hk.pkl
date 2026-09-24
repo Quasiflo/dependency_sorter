@@ -1,36 +1,15 @@
 // * HK - Git Hook Configuration
 // This file ensures you are committing properly linted and formatted files which will pass ci
+amends "package://github.com/jdx/hk/releases/download/v2.1.0/hk@2.1.0#/Config.pkl"
 
-amends "package://github.com/jdx/hk/releases/download/v2.0.0/hk@2.0.0#/Config.pkl"
-import "package://github.com/jdx/hk/releases/download/v2.0.0/hk@2.0.0#/Builtins.pkl"
+import "generated/generated.pkl"
 
-local dart_globs = List("**/*.dart", "**/analysis_options.yaml", "**/pubspec.yaml")
-
-exclude = List("examples/**")
-
-steps {
-  ["rumdl"] = Builtins.rumdl
-  ["zizmor"] = Builtins.zizmor
-  ["dart_fix"] {
-    glob = dart_globs
-    check = "dart fix --dry-run"
-    fix = "dart fix --apply"
-  }
-  ["dart_format"] {
-    glob = List("**/*.dart")
-    check = "dart format --output=none --set-exit-if-changed {{files}}"
-    fix = "dart format {{files}}"
-    batch = true
-  }
-  ["dependency_sorter"] {
-    // Dogfoods this package: keeps pubspec dependencies sorted so the
-    // sort_pub_dependencies lint (checked in dart_analyze) stays green.
-    glob = List("**/pubspec.yaml")
-    check = "dart run dependency_sorter --check"
-    fix = "dart run dependency_sorter"
-  }
-  ["dart_analyze"] {
-    glob = dart_globs
-    check = "dart analyze --fatal-infos"
-  }
-}
+steps =
+  generated.addSteps((generated.steps) {
+    ["[fix] dependency_sorter"] {
+      // Dogfoods this package: keeps pubspec dependencies sorted so the sort_pub_dependencies lint (checked in dart_analyze) stays green.
+      glob = List("**/pubspec.yaml")
+      check = "dart run dependency_sorter --check"
+      fix = "dart run dependency_sorter"
+    }
+  })

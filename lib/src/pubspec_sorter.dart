@@ -1,6 +1,5 @@
+import 'package:dependency_sorter/src/sort_config.dart';
 import 'package:yaml/yaml.dart';
-
-import 'sort_config.dart';
 
 /// The outcome of sorting a pubspec's dependency sections.
 class SortResult {
@@ -21,18 +20,20 @@ class SortResult {
 ///
 /// Returns [SortConfig.defaults] when the key is absent. Throws a
 /// [FormatException] when the pubspec (or the config section) is malformed.
-SortConfig parseSortConfig(String contents) {
+SortConfig parseSortConfig(final String contents) {
   final Object? document = loadYaml(contents);
-  if (document == null) return SortConfig.defaults;
+  if (document == null) {
+    return SortConfig.defaults;
+  }
   if (document is! YamlMap) {
     throw const FormatException('Pubspec does not contain a YAML map.');
   }
   final Object? raw = document['dependency_sorter'];
-  if (raw == null) return SortConfig.defaults;
+  if (raw == null) {
+    return SortConfig.defaults;
+  }
   if (raw is! YamlMap) {
-    throw const FormatException(
-      'Invalid "dependency_sorter" section: expected a map of flags.',
-    );
+    throw const FormatException('Invalid "dependency_sorter" section: expected a map of flags.');
   }
   return SortConfig.fromMap(Map<Object?, Object?>.from(raw));
 }
@@ -48,35 +49,36 @@ SortConfig parseSortConfig(String contents) {
 /// while blank-line separators stay pinned where they are; sections that
 /// cannot be parsed safely (flow-style maps, unexpected indentation,
 /// unparseable keys) are left unchanged.
-SortResult sortPubspecContents(String contents, SortConfig config) {
+SortResult sortPubspecContents(final String contents, final SortConfig config) {
   if (!config.sortsAnything) {
     return SortResult(contents: contents, sortedSections: const []);
   }
 
-  final String lineEnding = contents.contains('\r\n') ? '\r\n' : '\n';
-  final bool hasTrailingNewline =
-      contents.endsWith('\n') || contents.endsWith('\r');
-  final List<String> lines = _splitLines(contents);
+  final lineEnding = contents.contains('\r\n') ? '\r\n' : '\n';
+  final hasTrailingNewline = contents.endsWith('\n') || contents.endsWith('\r');
+  final lines = _splitLines(contents);
 
-  final List<String> sortedSections = [];
-  for (final String section in const [
-    'dependencies',
-    'dev_dependencies',
-    'dependency_overrides',
-  ]) {
-    if (!_isSectionEnabled(section, config)) continue;
-    if (_sortSection(lines, section)) sortedSections.add(section);
+  final sortedSections = <String>[];
+  for (final section in const ['dependencies', 'dev_dependencies', 'dependency_overrides']) {
+    if (!_isSectionEnabled(section, config)) {
+      continue;
+    }
+    if (_sortSection(lines, section)) {
+      sortedSections.add(section);
+    }
   }
 
   if (sortedSections.isEmpty) {
     return SortResult(contents: contents, sortedSections: const []);
   }
   var out = lines.join(lineEnding);
-  if (hasTrailingNewline) out += lineEnding;
+  if (hasTrailingNewline) {
+    out += lineEnding;
+  }
   return SortResult(contents: out, sortedSections: sortedSections);
 }
 
-bool _isSectionEnabled(String section, SortConfig config) {
+bool _isSectionEnabled(final String section, final SortConfig config) {
   switch (section) {
     case 'dependencies':
       return config.sortDependencies;
@@ -94,11 +96,13 @@ bool _isSectionEnabled(String section, SortConfig config) {
 /// Handles both LF and CRLF input by stripping a trailing `\r` per line. The
 /// final empty segment produced by a trailing newline is dropped; callers
 /// restore it via `hasTrailingNewline`-style tracking.
-List<String> _splitLines(String contents) {
-  final List<String> raw = contents.split('\n');
+List<String> _splitLines(final String contents) {
+  final raw = contents.split('\n');
   // Drop the artifact of a trailing newline: it is tracked separately so
   // joining stays lossless for files with and without a final newline.
-  if (raw.isNotEmpty && raw.last == '') raw.removeLast();
+  if (raw.isNotEmpty && raw.last == '') {
+    raw.removeLast();
+  }
   return [
     for (final line in raw)
       if (line.endsWith('\r')) line.substring(0, line.length - 1) else line,
@@ -108,41 +112,46 @@ List<String> _splitLines(String contents) {
 /// Sorts a single top-level mapping section in place.
 ///
 /// Returns `true` when the section was reordered.
-bool _sortSection(List<String> lines, String section) {
-  final int header = _findSectionHeader(lines, section);
-  if (header == -1) return false;
+bool _sortSection(final List<String> lines, final String section) {
+  final header = _findSectionHeader(lines, section);
+  if (header == -1) {
+    return false;
+  }
 
   // An inline value (e.g. `dependencies: {}`) has nothing sortable.
-  if (_hasInlineValue(lines[header], section)) return false;
+  if (_hasInlineValue(lines[header], section)) {
+    return false;
+  }
 
-  final int regionEnd = _findRegionEnd(lines, header);
-  final int entryIndent = _findEntryIndent(lines, header + 1, regionEnd);
-  if (entryIndent == -1) return false;
+  final regionEnd = _findRegionEnd(lines, header);
+  final entryIndent = _findEntryIndent(lines, header + 1, regionEnd);
+  if (entryIndent == -1) {
+    return false;
+  }
 
-  final _SectionParse? parsed = _parseEntries(
-    lines,
-    header + 1,
-    regionEnd,
-    entryIndent,
-  );
-  if (parsed == null || parsed.entries.isEmpty) return false;
+  final parsed = _parseEntries(lines, header + 1, regionEnd, entryIndent);
+  if (parsed == null || parsed.entries.isEmpty) {
+    return false;
+  }
 
-  final List<String> keys = [for (final e in parsed.entries) e.key];
-  final List<String> sorted = List.of(keys)..sort();
-  if (_listsEqual(keys, sorted)) return false;
+  final keys = <String>[for (final e in parsed.entries) e.key];
+  final sorted = List<String>.of(keys)..sort();
+  if (_listsEqual(keys, sorted)) {
+    return false;
+  }
 
   // Stable reorder: duplicate keys (invalid pubspecs) keep relative order.
-  final List<_EntryBlock> reordered = List.of(parsed.entries)
-    ..sort((a, b) {
-      final int order = a.key.compareTo(b.key);
+  final reordered = List<_EntryBlock>.of(parsed.entries)
+    ..sort((final a, final b) {
+      final order = a.key.compareTo(b.key);
       return order != 0 ? order : a.index.compareTo(b.index);
     });
 
   // Rebuild by walking the original layout: gaps stay exactly where they
   // are while entry slots take the next entry in sorted order. An unchanged
   // order therefore reproduces the input byte-for-byte.
-  final List<_EntryBlock> queue = List.of(reordered);
-  final List<String> rebuilt = [
+  final queue = List<_EntryBlock>.of(reordered);
+  final rebuilt = <String>[
     for (final block in parsed.items)
       if (block is _GapBlock) ...block.lines else ...queue.removeAt(0).lines,
     ...parsed.trailing,
@@ -154,34 +163,40 @@ bool _sortSection(List<String> lines, String section) {
 }
 
 /// Finds the top-level `section:` header, or -1 when absent.
-int _findSectionHeader(List<String> lines, String section) {
-  final RegExp header = RegExp(
-    '^${RegExp.escape(section)}\\s*:(\\s*#.*)?\\s*\$',
-  );
+int _findSectionHeader(final List<String> lines, final String section) {
+  final header = RegExp('^${RegExp.escape(section)}\\s*:(\\s*#.*)?\\s*\$');
   for (var i = 0; i < lines.length; i++) {
-    if (header.hasMatch(lines[i])) return i;
+    if (header.hasMatch(lines[i])) {
+      return i;
+    }
   }
   return -1;
 }
 
 /// Returns `true` when the header line carries an inline value.
-bool _hasInlineValue(String headerLine, String section) {
-  final int colon = headerLine.indexOf(':');
-  if (colon == -1) return false;
+bool _hasInlineValue(final String headerLine, final String section) {
+  final colon = headerLine.indexOf(':');
+  if (colon == -1) {
+    return false;
+  }
   var rest = headerLine.substring(colon + 1).trim();
   // Strip a trailing comment to avoid mistaking `#` content for a value.
-  final int comment = rest.indexOf('#');
-  if (comment != -1) rest = rest.substring(0, comment).trim();
+  final comment = rest.indexOf('#');
+  if (comment != -1) {
+    rest = rest.substring(0, comment).trim();
+  }
   return rest.isNotEmpty;
 }
 
 /// Finds the first line after [header] that starts a new top-level key.
-int _findRegionEnd(List<String> lines, int header) {
+int _findRegionEnd(final List<String> lines, final int header) {
   // A top-level key starts at column 0 and contains a colon. Indented lines
   // (entries, continuations, comments) belong to the current section.
-  final RegExp topLevelKey = RegExp(r'^\S[^#]*:');
+  final topLevelKey = RegExp(r'^\S[^#]*:');
   for (var i = header + 1; i < lines.length; i++) {
-    if (topLevelKey.hasMatch(lines[i])) return i;
+    if (topLevelKey.hasMatch(lines[i])) {
+      return i;
+    }
   }
   return lines.length;
 }
@@ -190,11 +205,13 @@ int _findRegionEnd(List<String> lines, int header) {
 ///
 /// The entry indent is the indent of the first key-like line. Comment-only
 /// and blank lines are skipped.
-int _findEntryIndent(List<String> lines, int start, int end) {
+int _findEntryIndent(final List<String> lines, final int start, final int end) {
   for (var i = start; i < end; i++) {
-    final String line = lines[i];
-    if (line.trim().isEmpty || line.trimLeft().startsWith('#')) continue;
-    final _KeyMatch? match = _matchEntryKey(line);
+    final line = lines[i];
+    if (line.trim().isEmpty || line.trimLeft().startsWith('#')) {
+      continue;
+    }
+    final match = _matchEntryKey(line);
     if (match == null) {
       // A non-key line (e.g. a stray scalar) means this is not a plain
       // dependency map; bail out rather than corrupt it.
@@ -218,31 +235,41 @@ class _KeyMatch {
 ///
 /// Supports bare, single-quoted and double-quoted keys. Returns `null` for
 /// lines that are not key-like (continuations, list items, flow content).
-_KeyMatch? _matchEntryKey(String line) {
-  final int indent = line.length - line.trimLeft().length;
-  final String trimmed = line.trimLeft();
-  if (trimmed.startsWith('#') || trimmed.startsWith('- ')) return null;
+_KeyMatch? _matchEntryKey(final String line) {
+  final indent = line.length - line.trimLeft().length;
+  final trimmed = line.trimLeft();
+  if (trimmed.startsWith('#') || trimmed.startsWith('- ')) {
+    return null;
+  }
 
-  final int colon = _findKeyColon(trimmed);
-  if (colon == -1) return null;
-  final String rawKey = trimmed.substring(0, colon).trim();
-  if (rawKey.isEmpty) return null;
+  final colon = _findKeyColon(trimmed);
+  if (colon == -1) {
+    return null;
+  }
+  final rawKey = trimmed.substring(0, colon).trim();
+  if (rawKey.isEmpty) {
+    return null;
+  }
 
-  final String? key = _decodeKey(rawKey);
-  if (key == null) return null;
+  final key = _decodeKey(rawKey);
+  if (key == null) {
+    return null;
+  }
   return _KeyMatch(indent, key);
 }
 
 /// Finds the colon terminating a mapping key, skipping colons inside quotes
 /// and flow brackets. Returns -1 when there is none (e.g. `key # comment`
 /// without a value, or a continuation line).
-int _findKeyColon(String trimmed) {
+int _findKeyColon(final String trimmed) {
   String? quote;
   var bracketDepth = 0;
   for (var i = 0; i < trimmed.length; i++) {
-    final String char = trimmed[i];
+    final char = trimmed[i];
     if (quote != null) {
-      if (char == quote && trimmed[i - 1] != r'\') quote = null;
+      if (char == quote && trimmed[i - 1] != r'\') {
+        quote = null;
+      }
       continue;
     }
     switch (char) {
@@ -251,35 +278,43 @@ int _findKeyColon(String trimmed) {
         // A quote only opens inside the key part (before any colon or
         // bracket); a quote later on starts a value, which we never reach
         // because we return at the first top-level colon.
-        if (bracketDepth == 0) quote = char;
+        if (bracketDepth == 0) {
+          quote = char;
+        }
       case '{':
       case '[':
         bracketDepth++;
       case '}':
       case ']':
-        if (bracketDepth > 0) bracketDepth--;
+        if (bracketDepth > 0) {
+          bracketDepth--;
+        }
       case ':':
-        if (bracketDepth > 0) continue;
-        final String next = i + 1 < trimmed.length ? trimmed[i + 1] : '';
+        if (bracketDepth > 0) {
+          continue;
+        }
+        final next = i + 1 < trimmed.length ? trimmed[i + 1] : '';
         // In YAML `key:` needs end-of-line or whitespace after the colon;
         // `http://...` inside a value must not count (we only scan keys,
         // but flow values like `{a: b}` are guarded by bracketDepth too).
-        if (next == '' || next == ' ' || next == '\t') return i;
+        if (next == '' || next == ' ' || next == '\t') {
+          return i;
+        }
     }
   }
   return -1;
 }
 
 /// Decodes a raw key into its string value, or `null` when unsupported.
-String? _decodeKey(String rawKey) {
-  if (rawKey.length >= 2 &&
-      ((rawKey.startsWith('"') && rawKey.endsWith('"')) ||
-          (rawKey.startsWith("'") && rawKey.endsWith("'")))) {
+String? _decodeKey(final String rawKey) {
+  if (rawKey.length >= 2 && ((rawKey.startsWith('"') && rawKey.endsWith('"')) || (rawKey.startsWith("'") && rawKey.endsWith("'")))) {
     // Quoted keys: sorting uses the inner text, matching how the lint
     // compares decoded key strings for ordinary package names.
     return rawKey.substring(1, rawKey.length - 1);
   }
-  if (_bareKey.hasMatch(rawKey)) return rawKey;
+  if (_bareKey.hasMatch(rawKey)) {
+    return rawKey;
+  }
   // Flow collections or exotic scalars: not sortable entry keys.
   return null;
 }
@@ -329,39 +364,44 @@ class _SectionParse {
 /// entries permute around them. Returns `null` when the region is not a
 /// plain flat map (mixed indentation, unparseable keys, nested top-level
 /// content).
-_SectionParse? _parseEntries(
-  List<String> lines,
-  int start,
-  int end,
-  int entryIndent,
-) {
-  final List<_EntryBlock> entries = [];
-  final List<_Block> items = [];
-  final List<String> pendingComments = [];
-  final List<String> trailing = [];
+_SectionParse? _parseEntries(final List<String> lines, final int start, final int end, final int entryIndent) {
+  final entries = <_EntryBlock>[];
+  final items = <_Block>[];
+  final pendingComments = <String>[];
+  final trailing = <String>[];
   _EntryBlock? current;
   var index = 0;
 
   // Whether the blank run at [i] separates blocks. A blank run is part of
   // the current entry's multiline value only when the next substantive line
   // continues that value (deeper indent, not an entry key).
-  bool isGap(int i) {
-    if (current == null) return true;
+  bool isGap(final int i) {
+    if (current == null) {
+      return true;
+    }
     for (var j = i; j < end; j++) {
-      final String next = lines[j];
-      if (next.trim().isEmpty) continue;
-      if (next.trimLeft().startsWith('#')) return true;
-      final int indent = next.length - next.trimLeft().length;
-      final _KeyMatch? match = _matchEntryKey(next);
-      if (match != null && indent == entryIndent) return true;
-      if (indent > entryIndent) return false;
+      final next = lines[j];
+      if (next.trim().isEmpty) {
+        continue;
+      }
+      if (next.trimLeft().startsWith('#')) {
+        return true;
+      }
+      final indent = next.length - next.trimLeft().length;
+      final match = _matchEntryKey(next);
+      if (match != null && indent == entryIndent) {
+        return true;
+      }
+      if (indent > entryIndent) {
+        return false;
+      }
       return true;
     }
     return true;
   }
 
   for (var i = start; i < end; i++) {
-    final String line = lines[i];
+    final line = lines[i];
     if (line.trim().isEmpty) {
       if (!isGap(i)) {
         // Blank line inside a multiline value; keep it with the entry.
@@ -378,7 +418,7 @@ _SectionParse? _parseEntries(
       // Comments at (or above) the entry level attach to the entry that
       // follows them. More deeply indented comments belong to the current
       // entry's nested value and must travel with it.
-      final int indent = line.length - line.trimLeft().length;
+      final indent = line.length - line.trimLeft().length;
       if (current != null && indent > entryIndent) {
         current.lines.add(line);
       } else {
@@ -386,8 +426,8 @@ _SectionParse? _parseEntries(
       }
       continue;
     }
-    final _KeyMatch? match = _matchEntryKey(line);
-    final int indent = line.length - line.trimLeft().length;
+    final match = _matchEntryKey(line);
+    final indent = line.length - line.trimLeft().length;
     if (match != null && indent == entryIndent) {
       current = _EntryBlock(match.key, index++, [...pendingComments, line]);
       entries.add(current);
@@ -408,10 +448,14 @@ _SectionParse? _parseEntries(
   return _SectionParse(entries, items, trailing);
 }
 
-bool _listsEqual(List<String> a, List<String> b) {
-  if (a.length != b.length) return false;
+bool _listsEqual(final List<String> a, final List<String> b) {
+  if (a.length != b.length) {
+    return false;
+  }
   for (var i = 0; i < a.length; i++) {
-    if (a[i] != b[i]) return false;
+    if (a[i] != b[i]) {
+      return false;
+    }
   }
   return true;
 }

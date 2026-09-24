@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.0](https://github.com/Quasiflo/dependency_sorter/compare/v0.1.0...v0.2.0) (2026-09-15)
+## [0.2.0](https://github.com/Quasiflo/dependency_sorter/tree/v0.2.0) (2026-09-15)
 
 
 ### Features

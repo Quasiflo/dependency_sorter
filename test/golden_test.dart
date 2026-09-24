@@ -13,42 +13,23 @@ import 'package:test/test.dart';
 /// review the resulting diff carefully before committing.
 void main() {
   group('golden fixtures', () {
-    final Directory fixtures = Directory(
-      p.join(Directory.current.path, 'test', 'fixtures'),
-    );
-    final List<File> inputs =
-        fixtures
-            .listSync()
-            .whereType<File>()
-            .where((file) => file.path.endsWith('.unsorted.yaml'))
-            .toList()
-          ..sort((a, b) => a.path.compareTo(b.path));
+    final fixtures = Directory(p.join(Directory.current.path, 'test', 'fixtures'));
+    final inputs = fixtures.listSync().whereType<File>().where((final file) => file.path.endsWith('.unsorted.yaml')).toList()..sort((final a, final b) => a.path.compareTo(b.path));
 
     test('fixtures directory is not empty', () {
       expect(inputs, isNotEmpty);
     });
 
-    for (final File input in inputs) {
-      final String name = p.basenameWithoutExtension(
-        p.basenameWithoutExtension(input.path),
-      );
+    for (final input in inputs) {
+      final name = p.basenameWithoutExtension(p.basenameWithoutExtension(input.path));
       test(name, () {
-        final File expectedFile = File(
-          p.join(fixtures.path, '$name.sorted.yaml'),
-        );
-        final SortResult result = sortPubspecContents(
-          input.readAsStringSync(),
-          SortConfig.defaults,
-        );
+        final expectedFile = File(p.join(fixtures.path, '$name.sorted.yaml'));
+        final result = sortPubspecContents(input.readAsStringSync(), SortConfig.defaults);
         if (Platform.environment['UPDATE_GOLDENS'] == 'true') {
           expectedFile.writeAsStringSync(result.contents);
           return;
         }
-        expect(
-          expectedFile.existsSync(),
-          isTrue,
-          reason: 'missing golden $name.sorted.yaml',
-        );
+        expect(expectedFile.existsSync(), isTrue, reason: 'missing golden $name.sorted.yaml');
         expect(result.contents, expectedFile.readAsStringSync());
       });
     }

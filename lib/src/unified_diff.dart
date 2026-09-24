@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'terminal.dart';
+import 'package:dependency_sorter/src/terminal.dart';
 
 /// A minimal unified diff for `--diff` output.
 ///
@@ -10,24 +10,20 @@ import 'terminal.dart';
 ///
 /// When [color] is `true`, deletions print red, insertions green, and hunk
 /// headers cyan. Defaults to plain text suitable for pipes and CI logs.
-String unifiedDiff({
-  required String path,
-  required List<String> from,
-  required List<String> to,
-  int context = 3,
-  bool color = false,
-}) {
-  final TerminalStyle style = TerminalStyle(enabled: color);
-  final List<_Edit> edits = _diffEdits(from, to);
-  if (edits.every((edit) => edit is _Equal)) return '';
-  final StringBuffer out = StringBuffer()
+String unifiedDiff({required final String path, required final List<String> from, required final List<String> to, final int context = 3, final bool color = false}) {
+  final style = TerminalStyle(enabled: color);
+  final edits = _diffEdits(from, to);
+  if (edits.every((final edit) => edit is _Equal)) {
+    return '';
+  }
+  final out = StringBuffer()
     ..writeln(style.bold('--- a/$path'))
     ..writeln(style.bold('+++ b/$path'));
 
   // Line numbers (1-based) of each edit in the from/to files.
   var fromLine = 1;
   var toLine = 1;
-  final List<(_Edit, int, int)> numbered = [
+  final numbered = <(_Edit, int, int)>[
     for (final edit in edits)
       switch (edit) {
         _Equal() => (edit, fromLine++, toLine++),
@@ -37,12 +33,14 @@ String unifiedDiff({
   ];
 
   // Group changed edits into hunks, expanded by [context] lines.
-  final List<List<(_Edit, int, int)>> hunks = [];
+  final hunks = <List<(_Edit, int, int)>>[];
   List<(_Edit, int, int)>? current;
   var hunkEnd = -1;
   for (var i = 0; i < numbered.length; i++) {
     final (edit, _, _) = numbered[i];
-    if (edit is _Equal) continue;
+    if (edit is _Equal) {
+      continue;
+    }
     final int start = max(0, i - context);
     if (current == null || start > hunkEnd) {
       current = [];
@@ -71,8 +69,8 @@ String unifiedDiff({
     }
     // A hunk touching no lines of a file starts at the line before the
     // hunk (`-0,0` for an empty file), per unified-diff convention.
-    final int fromStart = fromCount == 0 ? firstFrom - 1 : firstFrom;
-    final int toStart = toCount == 0 ? firstTo - 1 : firstTo;
+    final fromStart = fromCount == 0 ? firstFrom - 1 : firstFrom;
+    final toStart = toCount == 0 ? firstTo - 1 : firstTo;
     out.writeln(style.cyan('@@ -$fromStart,$fromCount +$toStart,$toCount @@'));
     for (final (edit, _, _) in hunk) {
       switch (edit) {
@@ -108,21 +106,16 @@ class _Insert extends _Edit {
 }
 
 /// Computes the edit script turning [from] into [to].
-List<_Edit> _diffEdits(List<String> from, List<String> to) {
-  final int m = from.length;
-  final int n = to.length;
-  final List<List<int>> lengths = List.generate(
-    m + 1,
-    (_) => List.filled(n + 1, 0),
-  );
+List<_Edit> _diffEdits(final List<String> from, final List<String> to) {
+  final m = from.length;
+  final n = to.length;
+  final lengths = List<List<int>>.generate(m + 1, (_) => List.filled(n + 1, 0));
   for (var i = m - 1; i >= 0; i--) {
     for (var j = n - 1; j >= 0; j--) {
-      lengths[i][j] = from[i] == to[j]
-          ? lengths[i + 1][j + 1] + 1
-          : max(lengths[i + 1][j], lengths[i][j + 1]);
+      lengths[i][j] = from[i] == to[j] ? lengths[i + 1][j + 1] + 1 : max(lengths[i + 1][j], lengths[i][j + 1]);
     }
   }
-  final List<_Edit> edits = [];
+  final edits = <_Edit>[];
   var i = 0;
   var j = 0;
   while (i < m && j < n) {

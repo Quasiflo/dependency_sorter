@@ -20,24 +20,23 @@ class TerminalStyle {
   static const String failMark = '\u2716';
 
   /// Wraps [text] in the given ANSI [code], or returns it unchanged.
-  String wrap(String text, String code) =>
-      enabled ? '\x1b[${code}m$text\x1b[0m' : text;
+  String wrap(final String text, final String code) => enabled ? '\x1b[${code}m$text\x1b[0m' : text;
 
   /// Bold text.
-  String bold(String text) => wrap(text, '1');
+  String bold(final String text) => wrap(text, '1');
 
   /// Dimmed (faint) text, for secondary detail lines.
-  String dim(String text) => wrap(text, '2');
+  String dim(final String text) => wrap(text, '2');
 
   /// Red text, for errors.
-  String red(String text) => wrap(text, '31');
+  String red(final String text) => wrap(text, '31');
 
   /// Green text, for success messages.
-  String green(String text) => wrap(text, '32');
+  String green(final String text) => wrap(text, '32');
 
   /// Yellow text, for action-required messages.
-  String yellow(String text) => wrap(text, '33');
+  String yellow(final String text) => wrap(text, '33');
 
   /// Cyan text, for diff hunk headers.
-  String cyan(String text) => wrap(text, '36');
+  String cyan(final String text) => wrap(text, '36');
 }

@@ -1,11 +1,4 @@
-include: package:lints/recommended.yaml
-
-analyzer:
-  language:
-    strict-casts: true
-    strict-inference: true
-    strict-raw-types: true
-
-linter:
-  rules:
-    - sort_pub_dependencies
+---
+# Additional information about this file can be found at https://dart.dev/tools/analysis
+#* This package uses Quasiflo's standard linting rules, found at https://github.com/Quasiflo/quasiflo_lints
+include: package:quasiflo_lints/lints.yaml

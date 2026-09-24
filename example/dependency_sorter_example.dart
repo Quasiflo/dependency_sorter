@@ -10,7 +10,8 @@ dependencies:
   args: any
 ''';
 
-  final SortResult result = sortPubspecContents(unsorted, SortConfig.defaults);
+  final result = sortPubspecContents(unsorted, SortConfig.defaults);
+  // Example output is shown via stdout, so printing is intentional.
   // ignore: avoid_print
   print(result.contents);
 }
