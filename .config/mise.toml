@@ -2,7 +2,7 @@
 
 [tools]
 #* Main
-"cargo:templatry" = "0.2.0" # Used for generating config files
+"cargo:templatry" = "0.2.1" # Used for generating config files
 #* Linting
 "aqua:jdx/hk" = "2.4.0"                # Used for running linting, formatting & git hooks
 "aqua:rvben/rumdl" = "0.2.78"          # Used for linting & formatting markdown
