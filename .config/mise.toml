@@ -4,7 +4,7 @@
 #* Main
 "cargo:templatry" = "0.2.1" # Used for generating config files
 #* Linting
-"aqua:jdx/hk" = "2.6.0"                # Used for running linting, formatting & git hooks
+"aqua:jdx/hk" = "2.7.0"                # Used for running linting, formatting & git hooks
 "aqua:rvben/rumdl" = "0.2.79"          # Used for linting & formatting markdown
 "aqua:tombi-toml/tombi" = "1.8.5"      # Used for linting & formatting toml
 "aqua:astral-sh/uv" = "0.13.1"        # Used for python (pipx) linting tools
