@@ -366,6 +366,7 @@ specifiers = ["0.2.1"]
 version = "3.2.1"
 backend = "github:asciinema/asciinema"
 specifiers = ["3.2.1"]
+unsupported_platforms = ["windows-x64"]
 
 [tools."github:asciinema/asciinema"."platforms.linux-arm64"]
 checksum = "sha256:b516a6d896844c0ffbc96e0a55afe4cbcc79216abde0fc64fdda4e39bee421ea"
@@ -542,6 +543,10 @@ provenance = "github-attestations"
 version = "3.47.5"
 backend = "http:flutter"
 specifiers = ["3.47.5"]
+unsupported_platforms = [
+    "linux-arm64",
+    "linux-arm64-musl",
+]
 
 [tools."http:flutter"."platforms.linux-x64"]
 checksum = "sha256:2132e990f236f8d22e7c6314b29a191a95b10d7cbcfec9b4e2e303d996652cbb"
